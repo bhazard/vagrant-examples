@@ -1,0 +1,69 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# ---------------------------------------
+# Things that might need tweaking for your network
+DOMAIN = 'billhazard.local'
+SUBNET = '192.168.2'
+# The SERVER_IP here should match the IP specified in salt/minion for the
+# master variable around line 12.
+SERVER_IP = "#{SUBNET}.10"
+MINION_IP = "#{SUBNET}.11"
+
+# ---------------------------------------
+
+SERVER_MEMORY = 1024
+MINION_MEMORY = 1024
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
+
+  config.vm.box = "ubuntu-trusty-server-64"
+  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+
+# ---------------------
+# Server configuration
+# The server sits both on the private network and presents a website on
+# host's NAT'ed network (Port 80 on guest forwarded to localhost:8080)
+# ---------------------
+  config.vm.define "salt", primary: true do |vmconfig|
+    vmconfig.vm.network :private_network, ip: SERVER_IP
+    vmconfig.vm.hostname = "salt.#{DOMAIN}"
+#    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+    vmconfig.vm.provider :virtualbox do |vb|
+      vb.name = vmconfig.vm.hostname
+      vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
+    end
+    
+    vmconfig.vm.provision :salt do |salt|
+      salt.install_master = true
+      salt.master_config = 'salt/master'
+      # TO-DO: accept_keys is deprecated and should be replaced by seed_master
+      #salt.accept_keys = true
+      salt.minion_config = 'salt/minion'
+      #salt.run_highstate = true
+    end
+  end
+
+# ---------------------
+# Minion configuration
+# ---------------------
+  config.vm.define "minion" do |vmconfig|
+    vmconfig.vm.network :private_network, ip: MINION_IP
+    vmconfig.vm.hostname = "minion.#{DOMAIN}"
+    vmconfig.vm.provider :virtualbox do |vb|
+      vb.name = vmconfig.vm.hostname
+      vb.customize ["modifyvm", :id, "--memory", MINION_MEMORY]
+    end
+
+    vmconfig.vm.provision :salt do |salt|
+      salt.minion_config = 'salt/minion'
+      #salt.run_highstate = true
+    end
+
+  end
+
+end
