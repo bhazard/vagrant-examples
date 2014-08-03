@@ -4,11 +4,13 @@
 # ---------------------------------------
 # Things that might need tweaking for your network
 DOMAIN = 'billhazard.local'
+HOSTNAME = "forthewin.#{DOMAIN}"
 SUBNET = '192.168.2'
 SERVER_IP = "#{SUBNET}.10"
 SERVER_MEMORY = 2048
 # ---------------------------------------
 
+# vagrant rdp is broken in vagrant 1.6.3 but you can use a native RDP client
 Vagrant.require_version ">= 1.6.0"
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
@@ -16,8 +18,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
 # the virtualbox box with windows installed
-  config.vm.box = "win12serv"
-  #config.vm.box_url = "file://win12serv"
+  config.vm.box = "win2012serv"
+  #config.vm.box_url = "file://win2012serv"
 
 # communicate via winRDP instead of ssh:
   config.vm.communicator = 'winrm'
@@ -28,15 +30,20 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "win", primary: true do |vmconfig|
     vmconfig.vm.network :private_network, ip: SERVER_IP
     vmconfig.vm.guest = :windows
-    vmconfig.vm.hostname = "forthewin.#{DOMAIN}"
+    # setting of hostname does not work in the vagrant 1.6.3 windows guest
+    vmconfig.vm.hostname = 'winrenamed'
     vmconfig.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
     vmconfig.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
-    #    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+
     vmconfig.vm.provider :virtualbox do |vb|
       vb.gui = true
-      vb.name = vmconfig.vm.hostname
-#      vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
+      vb.name = HOSTNAME
+      vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
     end
+
+  # Simple script provisioner demo -- runs a PowerShell command or script
+    vmconfig.vm.provision 'shell', 
+      inline: 'Write-Host Hello from ($env:computername)!'
     
   end
 

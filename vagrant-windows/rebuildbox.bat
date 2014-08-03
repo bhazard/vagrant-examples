@@ -4,9 +4,10 @@
 @REM described on the wiki for this site.
 @REM --------------------------------------------------------------------------
 @SETLOCAL
-@SET VBXNAME=win12servgui-vagrant
-@SET BOXNAME=win12serv
+@SET VBXNAME=win2012servgui-vagrant
+@SET BOXNAME=win2012serv
 IF EXIST %BOXNAME% DEL %BOXNAME%
 @ECHO The packaging takes about 10 mins and uses 6Gb of disk at peak.
+vagrant box remove %BOXNAME%
 vagrant package --base %VBXNAME% --output %BOXNAME%
 @ENDLOCAL
