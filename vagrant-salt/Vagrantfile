@@ -8,12 +8,16 @@ SUBNET = '192.168.2'
 # The SERVER_IP here should match the IP specified in salt/minion for the
 # master variable around line 12.
 SERVER_IP = "#{SUBNET}.10"
-MINION_IP = "#{SUBNET}.11"
+UMINION_IP = "#{SUBNET}.11"
+WMINION_IP = "#{SUBNET}.12"
+MASTERLESS_IP = "#{SUBNET}.13"
 
 # ---------------------------------------
 
 SERVER_MEMORY = 1024
-MINION_MEMORY = 1024
+MASTERLESS_MEMORY = 1024
+UMINION_MEMORY = 1024
+WMINION_MEMORY = 1024
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
@@ -21,17 +25,21 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
-  config.vm.box = "ubuntu-trusty-server-64"
+  config.vm.box = 'ubuntu-trusty-server-64'
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+
+  config.vm.synced_folder 'salt/roots/', '/srv/'
 
 # ---------------------
 # Server configuration
 # The server sits both on the private network and presents a website on
 # host's NAT'ed network (Port 80 on guest forwarded to localhost:8080)
 # ---------------------
-  config.vm.define "salt", primary: true do |vmconfig|
+
+  config.vm.define 'salt', primary: true do |vmconfig|
     vmconfig.vm.network :private_network, ip: SERVER_IP
     vmconfig.vm.hostname = "salt.#{DOMAIN}"
+
 #    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
@@ -39,6 +47,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
     
     vmconfig.vm.provision :salt do |salt|
+      salt.verbose = true
       salt.install_master = true
       salt.master_config = 'salt/master'
       # TO-DO: accept_keys is deprecated and should be replaced by seed_master
@@ -49,21 +58,44 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   end
 
 # ---------------------
-# Minion configuration
+# Ubuntu minion configuration
 # ---------------------
-  config.vm.define "minion" do |vmconfig|
-    vmconfig.vm.network :private_network, ip: MINION_IP
-    vmconfig.vm.hostname = "minion.#{DOMAIN}"
+  config.vm.define 'ubuntu-minion' do |vmconfig|
+    vmconfig.vm.network :private_network, ip: UMINION_IP
+    vmconfig.vm.hostname = "ubuntu-minion.#{DOMAIN}"
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
-      vb.customize ["modifyvm", :id, "--memory", MINION_MEMORY]
+      vb.customize ["modifyvm", :id, "--memory", UMINION_MEMORY]
     end
 
     vmconfig.vm.provision :salt do |salt|
+      salt.verbose = true
       salt.minion_config = 'salt/minion'
-      #salt.run_highstate = true
+      salt.run_highstate = true
     end
 
+  end
+
+# ---------------------
+# Masterless Minion configuration
+# Configures apache with a simple web page
+# ---------------------
+  config.vm.define 'masterless', primary: true do |vmconfig|
+    vmconfig.vm.network :private_network, ip: MASTERLESS_IP
+    vmconfig.vm.hostname = "masterless.#{DOMAIN}"
+    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+    vmconfig.vm.provider :virtualbox do |vb|
+      vb.name = vmconfig.vm.hostname
+      vb.customize ["modifyvm", :id, "--memory", MASTERLESS_MEMORY]
+    end
+    
+    vmconfig.vm.provision :salt do |salt|
+      salt.verbose = true
+      salt.minion_config = 'salt/masterless'
+      salt.run_highstate = true
+    #  log_level =  'debug'
+    #  colorize = false
+    end
   end
 
 end
