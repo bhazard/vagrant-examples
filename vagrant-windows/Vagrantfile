@@ -19,7 +19,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 # the virtualbox box with windows installed
   config.vm.box = "win2012serv"
-  #config.vm.box_url = "file://win2012serv"
+  config.vm.box_url = "file://win2012serv"
 
 # communicate via winRDP instead of ssh:
   config.vm.communicator = 'winrm'

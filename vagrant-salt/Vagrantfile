@@ -17,7 +17,7 @@ MASTERLESS_IP = "#{SUBNET}.13"
 SERVER_MEMORY = 1024
 MASTERLESS_MEMORY = 1024
 UMINION_MEMORY = 1024
-WMINION_MEMORY = 1024
+WMINION_MEMORY = 2048
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
@@ -25,6 +25,7 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
+# This is the default base image ... for windows vm's, we over-ride this
   config.vm.box = 'ubuntu-trusty-server-64'
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
@@ -97,5 +98,50 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     #  colorize = false
     end
   end
+
+# ---------------------
+# Windows minion configuration
+# ---------------------
+  config.vm.define 'windows-minion', primary: true do |vmconfig|
+
+# the virtualbox box with windows installed
+    vmconfig.vm.box = "win2012serv"
+  #config.vm.box_url = "file://win2012serv"
+
+# communicate via winRDP instead of ssh:
+    vmconfig.vm.communicator = 'winrm'
+
+# Ensure that all networks are set to private
+    vmconfig.windows.set_work_network = true
+
+    vmconfig.vm.guest = :windows
+    # setting of hostname does not work in the vagrant 1.6.3 windows guest
+#    vmconfig.vm.hostname = 'winrenamed'
+    vmconfig.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
+    vmconfig.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
+
+    vmconfig.vm.network :private_network, ip: WMINION_IP
+    vmconfig.vm.hostname = "windows-minion.#{DOMAIN}"
+   # vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+
+    vmconfig.vm.provider :virtualbox do |vb|
+      vb.name = vmconfig.vm.hostname
+      vb.gui = true
+      vb.customize ["modifyvm", :id, "--memory", WMINION_MEMORY]
+    end
+    
+    # Simple script provisioner demo -- runs a PowerShell command or script
+    vmconfig.vm.provision 'shell', 
+      inline: 'Write-Host Hello from ($env:computername)!'
+
+    vmconfig.vm.provision :salt do |salt|
+      salt.verbose = true
+      salt.minion_config = 'salt/roots/windows-minion'
+      salt.run_highstate = true
+      salt.log_level =  'debug'
+    #  colorize = false
+    end
+  end
+
 
 end

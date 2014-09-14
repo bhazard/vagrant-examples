@@ -12,3 +12,6 @@ and provides a sample index.html.
 - a Windows base box -- instructions for creating one are [here](https://github.com/bhazard/vagrant-examples/wiki/Creating-a-Windows-Server-2012-Virtualbox-Image-for-Use-with-Vagrant)
 
 ### References
+
+- [TechNet Getting Started](http://technet.microsoft.com/en-us/library/dn249918.aspx)
+- [100 Days of DevOps with DSC](http://www.systemcentercentral.com/100DaysOfDevOps/)

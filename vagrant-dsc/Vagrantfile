@@ -5,12 +5,18 @@
 # =============================================================================
 
 # ------------------------------------------------------------------
-# Things that might need tweaking for your network
+# Things that might need tweaking for your world
 # ------------------------------------------------------------------
 
-HOSTNAME = 'windsc'
-SERVER_IP = '192.168.2.10'
-SERVER_MEMORY = 2048
+# Name for the vbx machine, as well as the guest's hostname
+HOSTNAME = 'howindsc'
+VBX_NAME = 'vbxwindsc'
+
+# the virtualbox box with windows installed and configured for vagrant use
+#   see the github wiki page for information on how to create this base box
+VBX_BASE_BOX = 'win2012serv'
+GUEST_IP = '192.168.2.10'
+GUEST_MEMORY = 2048
 
 # ------------------------------------------------------------------
 
@@ -22,23 +28,23 @@ VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
-# the virtualbox box with windows installed and configured for vagrant use
-#   see the github wiki page for information on how to create this base box
-  config.vm.box = "win2012serv"
+  config.vm.box = VBX_BASE_BOX
   #config.vm.box_url = "file://win2012serv"
 
-# communicate via winRDP instead of ssh:
+  # communicate via winRDP instead of ssh:
   config.vm.communicator = 'winrm'
 
-# Ensure that all networks are set to private (i.e., they are trusted)
+  # Ensure that all networks are set to private (i.e., they are trusted)
   config.windows.set_work_network = true
 
   config.vm.define "win", primary: true do |vmconfig|
-    vmconfig.vm.network :private_network, ip: SERVER_IP
+    vmconfig.vm.network :private_network, ip: GUEST_IP
     vmconfig.vm.guest = :windows
-    # setting of hostname does not work in the vagrant 1.6.3 windows guest; note
-    #   that setting the hostname in windows requires a reboot.  vagrant will do
-    #   this, but of course that takes time.  Comment this out after the first up.
+    # set the guest's hostname
+    # setting of hostname does not work in the vagrant 1.6.3 windows guest
+    # setting the hostname in windows requires a restart of the guest.  vagrant 
+    #   does this for you, but of course restart takes time.  
+    #   Comment out after first up.
     vmconfig.vm.hostname = HOSTNAME
 
     # Forward some ports.  The first two are required for vagrant to control the
@@ -50,8 +56,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     vmconfig.vm.provider :virtualbox do |vb|
       vb.gui = true
-      vb.name = HOSTNAME
-      vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
+      vb.name = VBX_NAME
+      vb.customize ["modifyvm", :id, "--memory", GUEST_MEMORY]
     end
 
   # DSC provisioner demo -- runs a PowerShell script to provision according to the
@@ -59,6 +65,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # has been shared in the guest as C:\vagrant.  This works for first up, but
   # seems to not persist through restarts.  vagrant reload will re-establish the share.
   # TO-DO: add an explicit share for this.
+  # TO-DO: parameterize the hostname
 
     $script = <<-SCRIPT
       Write-Host Starting DSC provisioning of ($env:computername)
