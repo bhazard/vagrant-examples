@@ -1,37 +1,49 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+# Vagrantfile to demonstrate how to launch a Windows guest and provision it
+# via Microsoft Desired State Configuration (DSC).  The example here simply
+# adds the Web Server role and installs a simple index.html page.  Verify by
+# pointing your browser to localhost:8080 from the host.
+# =============================================================================
 
-# ---------------------------------------
+# ------------------------------------------------------------------
 # Things that might need tweaking for your network
-DOMAIN = 'billhazard.local'
-HOSTNAME = "windsc"
-SUBNET = '192.168.2'
-SERVER_IP = "#{SUBNET}.10"
-SERVER_MEMORY = 2048
-# ---------------------------------------
+# ------------------------------------------------------------------
 
-# vagrant rdp is broken in vagrant 1.6.3 but you can use a native RDP client
+HOSTNAME = 'windsc'
+SERVER_IP = '192.168.2.10'
+SERVER_MEMORY = 2048
+
+# ------------------------------------------------------------------
+
+# The vagrant rdp command is broken prior to 1.6.4, but you can use earlier
+# versions as long as you launch RDP via your usual client
 Vagrant.require_version ">= 1.6.4"
-# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+
 VAGRANTFILE_API_VERSION = "2"
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
-# the virtualbox box with windows installed
+# the virtualbox box with windows installed and configured for vagrant use
+#   see the github wiki page for information on how to create this base box
   config.vm.box = "win2012serv"
   #config.vm.box_url = "file://win2012serv"
 
 # communicate via winRDP instead of ssh:
   config.vm.communicator = 'winrm'
 
-# Ensure that all networks are set to private
+# Ensure that all networks are set to private (i.e., they are trusted)
   config.windows.set_work_network = true
 
   config.vm.define "win", primary: true do |vmconfig|
     vmconfig.vm.network :private_network, ip: SERVER_IP
     vmconfig.vm.guest = :windows
-    # setting of hostname does not work in the vagrant 1.6.3 windows guest
+    # setting of hostname does not work in the vagrant 1.6.3 windows guest; note
+    #   that setting the hostname in windows requires a reboot.  vagrant will do
+    #   this, but of course that takes time.  Comment this out after the first up.
     vmconfig.vm.hostname = HOSTNAME
+
+    # Forward some ports.  The first two are required for vagrant to control the
+    # guest.  The third is needed to support out example DSC configuration which
+    # provisions the guest with the Windows Role of Web Server.
     vmconfig.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
     vmconfig.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
     vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, id: "http", auto_correct: true
@@ -43,16 +55,20 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
 
   # DSC provisioner demo -- runs a PowerShell script to provision according to the
-  # configuration in config.ps1
+  # configuration in config.ps1.  This provisioner expects that this directory
+  # has been shared in the guest as C:\vagrant.  This works for first up, but
+  # seems to not persist through restarts.  vagrant reload will re-establish the share.
+  # TO-DO: add an explicit share for this.
 
-$script = <<SCRIPT
-  Write-Host Hidy-ho from ($env:computername)!
-  cd c:\\vagrant
-  . c:\\vagrant\\config.ps1
-  MyWebConfig
-  Start-DscConfiguration -path c:\\vagrant\\MyWebConfig -wait -verbose
-  Write-Host Done.
-SCRIPT
+    $script = <<-SCRIPT
+      Write-Host Starting DSC provisioning of ($env:computername)
+      cd c:\\vagrant
+      . c:\\vagrant\\config.ps1
+      MyWebConfig
+      Start-DscConfiguration -path c:\\vagrant\\MyWebConfig -wait -verbose
+      Write-Host Done.
+    SCRIPT
+  
     vmconfig.vm.provision 'shell', 
       inline: $script
     
