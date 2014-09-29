@@ -15,6 +15,7 @@ config/secrets.yml
 win2012serv
 .vagrant
 *~
+.DS_Store
 
 ## Environment normalisation:
 /.bundle
