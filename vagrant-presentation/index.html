@@ -12,7 +12,8 @@
 
     <link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
 
-    <link href="css/impress-demo.css" rel="stylesheet" />
+    <link href="css/default.css" rel="stylesheet" />
+    <link href="css/highlight/tomorrow.css" rel="stylesheet" />
     
     <link rel="shortcut icon" href="favicon.png" />
     <link rel="apple-touch-icon" href="apple-touch-icon.png" />
@@ -27,97 +28,103 @@
 
 <div id="impress">
 
-    <!--
-        
-        Here is where interesting thing start to happen.
-        
-        Each step of the presentation should be an element inside the `#impress` with a class name
-        of `step`. These step elements are positioned, rotated and scaled by impress.js, and
-        the 'camera' shows them on each step of the presentation.
-        
-        Positioning information is passed through data attributes.
-        
-        In the example below we only specify x and y position of the step element with `data-x="-1000"`
-        and `data-y="-1500` attributes. This means that **the center** of the element (yes, the center)
-        will be positioned in point x = -1000px and y = -1500px of the presentation 'canvas'.
-        
-        It will not be rotated or scaled.
-        
-    -->
-    <div id="bored" class="step slide" data-x="-1000" data-y="-1500">
-        <h1>A Speedy Intro to Vagrant</h1>
-        <q>Aren't you just <b>bored</b> with all those slides-based presentations?</q>
+  <div id="title" class="step slide" data-x="-5000" data-y="-1000" data-scale="5">
+    <p class="title">Why Vagrant is Better than<br/>a Mantis Shrimp</q>
+    <p class="subtitle">
+      <a href="http://www.asburyagile.com/">Asbury Agile</a> ·
+      <span>October 2014</span>  ·
+      <span>Bill Hazard</span>
+    </p>
+      <img class="middle" src="images/Marathon-Logo-300x100.png">
+  </div>
+
+    <div id="mantis-title" class="step slide" data-x="-1000" data-y="-2400">
+        <h1 class="middle"><br/><br/><br/>First, the Mantis Shrimp</h1>
+    </div>
+    <div id="mantis-pic" class="step" data-x="-1050" data-y="-1500">
+        <img class="full-image" src="images/mantis_shrimp_body_armor-7.jpg">
     </div>
 
-    <!--
-        
-        The `id` attribute of the step element is used to identify it in the URL, but it's optional.
-        If it is not defined, it will get a default value of `step-N` where N is a number of slide.
-        
-        So in the example below it'll be `step-2`.
-        
-        The hash part of the url when this step is active will be `#/step-2`.
-        
-        You can also use `#step-2` in a link, to point directly to this particular step.
-        
-        Please note, that while `#/step-2` (with slash) would also work in a link it's not recommended.
-        Using classic `id`-based links like `#step-2` makes these links usable also in fallback mode.
-        
-    -->
-    <div class="step slide" data-x="0" data-y="-1500">
-        <q>Don't you think that presentations given <strong>in modern browsers</strong> shouldn't <strong>copy the limits</strong> of 'classic' slide decks?</q>
+    <div id="mantis-pic2" class="step" data-x="-1050" data-y="-400">
+        <img class="full-image" src="images/mantis_shrimp_goodlook.gif">
     </div>
 
-    <div class="step slide" data-x="1000" data-y="-1500">
-        <q>Would you like to <strong>impress your audience</strong> with <strong>stunning visualization</strong> of your talk?</q>
+    <div id="mantis-pic3" class="step" data-x="-1050" data-y="500">
+        <img class="full-image" src="images/hypnoshrimp.gif">
     </div>
 
-    <!--
-        
-        This is an example of step element being scaled.
-        
-        Again, we use a `data-` attribute, this time it's `data-scale="4"`, so it means that this
-        element will be 4 times larger than the others.
-        From presentation and transitions point of view it means, that it will have to be scaled
-        down (4 times) to make it back to it's correct size.
-        
-    -->
-    <div id="title" class="step" data-x="0" data-y="0" data-scale="4">
-        <span class="try">then you should try</span>
-        <h1>impress.js<sup>*</sup></h1>
-        <span class="footnote"><sup>*</sup> no rhyme intended</span>
+    <div id="mantis-pic4" class="step" data-x="-1050" data-y="1500">
+        <img class="full-image" src="images/smartshrimp.gif">
     </div>
 
-    <!--
-        
-        This element introduces rotation.
-        
-        Notation shouldn't be a surprise. We use `data-rotate="90"` attribute, meaning that this
-        element should be rotated by 90 degrees clockwise.
-        
-    -->
-    <div id="its" class="step" data-x="850" data-y="3000" data-rotate="90" data-scale="5">
-        <p>It's a <strong>presentation tool</strong> <br/>
-        inspired by the idea behind <a href="http://prezi.com">prezi.com</a> <br/>
-        and based on the <strong>power of CSS3 transforms and transitions</strong> in modern browsers.</p>
+    <div id="vagrant-title" class="step slide" data-x="500" data-y="-2400">
+        <h1 class="middle"><br/><br/>Ok, so that's the story on<br/>the Mantis Shrimp<br/><br/>Let's talk about Vagrant</h1>
     </div>
 
-    <div id="big" class="step" data-x="3500" data-y="2100" data-rotate="180" data-scale="6">
-        <p>visualize your <b>big</b> <span class="thoughts">thoughts</span></p>
+    <div id="vagrant-pic" class="step" data-x="550" data-y="-1500">
+        <img class="full-height" src="images/Will_code_HTML_for_food.png">
     </div>
 
-    <!--
-        
-        And now it gets really exiting! We move into third dimension!
-        
-        Along with `data-x` and `data-y`, you can define the position on third (Z) axis, with
-        `data-z`. In the example below we use `data-z="-3000"` meaning that element should be
-        positioned far away from us (by 3000px).
-        
-    -->
-    <div id="tiny" class="step" data-x="2825" data-y="2325" data-z="-3000" data-rotate="300" data-scale="1">
-        <p>and <b>tiny</b> ideas</p>
+    <div id="vagrant-pic2" class="step" data-x="450" data-y="-400">
+        <img class="full-height" src="images/vagrant.gif">
     </div>
+
+    <div class="step slide" data-x="500" data-y="500">
+        <h1>What does vagrant <b>do</b>?</h1>
+        <br/><br/><h2 class="middle"><em>Vagrant allows us to <b>quickly</b> create virtual machines running any environment we want.</em></h2>
+    </div>
+
+    <div class="step" data-x="500" data-y="2000" data-rotate="90">
+        <h1>Like what?</h1>
+    </div>
+
+    <div id="wordpress-pic" class="step" data-x="800" data-y="3600" data-rotate="90">
+        <img style="width:auto; max-height:40%;" src="images/wordpress-logo.jpg">
+    </div>
+
+    <div id="sharepoint-pic" class="step" data-x="500" data-y="3600" data-rotate="90">
+        <img style="width:auto; max-height:40%;" src="images/sharepoint.png">
+    </div>
+
+    <div id="rails-pic" class="step" data-x="200" data-y="3600" data-rotate="90">
+        <img class="middle" style="width:auto; max-height:40%;" src="images/ror.jpg">
+    </div>
+
+    <div id="steps" class="step slide" data-x="500" data-y="4500" data-rotate="90">
+        <p>The Steps:
+        <br/><br/>
+        <ol style="font-size:80%;">
+        <li>1. Install VirtualBox
+        <li>2. Install Vagrant
+        <li>3. Grab a copy of vagrantpress from github
+        <li>4. type "vagrant up"
+        </ol>
+    </p>
+    </div>
+
+
+    <div class="step slide" data-x="2000" data-y="-1500">
+        <pre><code>Vagrant.configure("2") do |config|
+  config.vm.box = "trusty64"
+  config.vm.box_url = 
+    "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+
+  config.vm.hostname = "mywordpressvm"
+  config.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+  config.vm.provider :virtualbox do |vb|
+    vb.name = config.vm.hostname
+  end
+
+  config.vm.provision :puppet do |puppet|
+    puppet.manifests_path = "puppet/manifests"
+    puppet.module_path = "puppet/modules"
+    puppet.manifest_file  = "init.pp"
+    puppet.options="--verbose --debug"
+  end
+
+end</code></pre>
+    </div>
+
 
     <!--
         
@@ -193,23 +200,11 @@
 
 </div>
 
+<!-- Enable syntax highlighting for code -->
+<script src="js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
 
-
-<!--
-    
-    Last, but not least.
-    
-    To make all described above really work, you need to include impress.js in the page.
-    I strongly encourage to minify it first.
-    
-    In here I just include full source of the script to make it more readable.
-    
-    You also need to call a `impress().init()` function to initialize impress.js presentation.
-    And you should do it in the end of your document. Not only because it's a good practice, but also
-    because it should be done when the whole document is ready.
-    Of course you can wrap it in any kind of "DOM ready" event, but I was too lazy to do so ;)
-    
--->
+<!-- Enable impress -->
 <script src="js/impress.js"></script>
 <script>impress().init();</script>
 
