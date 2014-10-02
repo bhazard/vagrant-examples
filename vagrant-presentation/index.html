@@ -49,11 +49,7 @@
         <img class="full-image" src="images/mantis_shrimp_goodlook.gif">
     </div>
 
-    <div id="mantis-pic3" class="step" data-x="-1050" data-y="500">
-        <img class="full-image" src="images/hypnoshrimp.gif">
-    </div>
-
-    <div id="mantis-pic4" class="step" data-x="-1050" data-y="1500">
+    <div id="mantis-pic4" class="step" data-x="-1050" data-y="500">
         <img class="full-image" src="images/smartshrimp.gif">
     </div>
 
@@ -91,19 +87,31 @@
     </div>
 
     <div id="steps" class="step slide" data-x="2000" data-y="-2500">
-        <p>The Steps:
+        <p>The Steps Without Vagrant
+        <br/><br/>
+        <ol style="font-size:80%;">
+        <li>1. Install PHP
+        <li>2. Install a web server
+        <li>3. Install MySQL
+        <li>4. Create a MySQL database
+        <li>5. Now do the "5 minute wordpress install"
+        </ol>
+    </p>
+    </div>
+
+    <div id="vagrant-steps" class="step slide" data-x="2000" data-y="-1500">
+        <p>The Steps with Vagrant (5 minutes)
         <br/><br/>
         <ol style="font-size:80%;">
         <li>1. Install VirtualBox
         <li>2. Install Vagrant
         <li>3. Grab a copy of vagrantpress from github
-        <li>4. type "vagrant up"
+        <li>4. Type "vagrant up"
         </ol>
     </p>
     </div>
 
-
-    <div class="step slide" data-x="2000" data-y="-1500">
+    <div class="step slide" data-x="2000" data-y="-500">
         <pre><code>Vagrant.configure("2") do |config|
   config.vm.box = "trusty64"
   config.vm.box_url = 
@@ -123,12 +131,45 @@
 end</code></pre>
     </div>
 
+    <div id="wp-pic" class="step" data-x="2000" data-y="500">
+        <img style="max-width:700; width: 100%;" src="images/wordpress-website.png">
+    </div>
 
+    <div id="summary" class="step slide" data-x="2000" data-y="1500">
+      <q>So which is better?</q><br/>
+      <span>
+      <img style="max-height:200px;" src="images/hypnoshrimp.gif">
+      &nbsp;&nbsp;<img style="max-height:200px;" src="images/vagrant.gif">
+  </span>
+  </div>
+
+<div id="references" class="step slide" data-x="5000" data-y="-1000" data-scale="5">
+  <h1>References</h1>
+
+  <h2>Presentation</h2>
+  <ul><li>Slides: <a href="http://github.com/bhazard/vagrant-examples">https://github.com/bhazard/vagrant-examples</a></li>
+      <li>Impress: <a href="http://bartaz.github.io/impress.js">http://bartaz.github.io/impress.js</a></li></ul>
+
+  <h2>Vagrant</h2>
+  <ul>
+    <li>Vagrant: <a href="http://vagrantup.com">http://vagrantup.com</a></li>
+    <li>VirtualBox: <a href="http://www.virtualbox.org">http://www.virtualbox.org</a></li>
+    <li>Vagrantpress: <a href="http://vagrantpress.org">http://vagrantpress.org</a></li>
+</ul>
+  <h2>Mantis Shrimp</h2>
+  <ul><li>theoatmeal: <a href="http://theoatmeal.com/comics/mantis_shrimp">http://theoatmeal.com/comics/mantis_shrimp</a></li></ul>
+
+</div>
 
     <div id="overview" class="step" data-x="500" data-y="1000" data-scale="10">
     </div>
 
+
+
+
 </div>
+
+
 
 <!-- Enable syntax highlighting for code -->
 <script src="js/highlight.pack.js"></script>
