@@ -481,7 +481,7 @@ body     { pointer-events: none; }
 }
 
 .slide pre code {
-    font-size: 80%;
+    font-size: 55%;
     line-height: 130%;
 }
 .slide q {
