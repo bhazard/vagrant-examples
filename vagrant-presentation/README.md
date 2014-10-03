@@ -1,7 +1,7 @@
 vagrant-presentation
 ============
 
-This is a 15 minute presentation about [Vagrant](https://www.vagrantup.com) that I gave at [Asbury Agile](http://www.asburyagile.com/) in October 2014.  Since it is so short, there isn't a whole lot here.
+This is a 15 minute presentation about [Vagrant](https://www.vagrantup.com) that I gave at [Asbury Agile](http://www.asburyagile.com/) in October 2014. You can [view the presentation](htmlpreview.github.io/?https://github.com/bhazard/vagrant-examples/blob/master/vagrant-presentation/index.html). 
 
 
 ### References
