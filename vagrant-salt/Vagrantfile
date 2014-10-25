@@ -1,50 +1,63 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+# Vagrantfile for creating a set of VM's to show various salt configurations
+# ----------------------------------------------------------------------------
 
-# ---------------------------------------
+# ubuntu-master -- an ubuntu salt master
+# ubuntu-minion -- an ubuntu minion that takes configuration from ubuntu-master
+# windows-minion -- a windows minion that is configured from ubuntu-master
+# masterless -- a stand-alone ubuntu vm that configures from the file system
+
+# ----------------------------------------------------------------------------
 # Things that might need tweaking for your network
-DOMAIN = 'billhazard.local'
+# ----------------------------------------------------------------------------
+DOMAIN = 'bhazard.com'
 SUBNET = '192.168.2'
+DEBUG = false   # Set to true for verbose output
+INCLUDE_MASTERLESS = false
+INCLUDE_WINDOWS_MINION = false
+
 # The SERVER_IP here should match the IP specified in salt/minion for the
 # master variable around line 12.
-SERVER_IP = "#{SUBNET}.10"
+UMASTER_IP = "#{SUBNET}.10"
 UMINION_IP = "#{SUBNET}.11"
 WMINION_IP = "#{SUBNET}.12"
 MASTERLESS_IP = "#{SUBNET}.13"
 
-# ---------------------------------------
-
-SERVER_MEMORY = 1024
+UMASTER_MEMORY = 1024
 MASTERLESS_MEMORY = 1024
 UMINION_MEMORY = 1024
 WMINION_MEMORY = 2048
 
-# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
-VAGRANTFILE_API_VERSION = "2"
+# ----------------------------------------------------------------------------
+
+# For RDP to work correctly for windows, you'll need 1.6.5 or greater.  If you
+# don't care about windows (or don't need RDP), older versions should be fine
+# and you can comment out the following line. 
+Vagrant.require_version ">= 1.6.5"
+
+VAGRANTFILE_API_VERSION = '2'
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
-# This is the default base image ... for windows vm's, we over-ride this
+# This is the default base image ... for windows vm's, we over-ride this below
   config.vm.box = 'ubuntu-trusty-server-64'
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
   config.vm.synced_folder 'salt/roots/', '/srv/'
 
-# ---------------------
-# Server configuration
+# ----------------------------------------------------------------------------
+# ubuntu-master configuration
 # The server sits both on the private network and presents a website on
 # host's NAT'ed network (Port 80 on guest forwarded to localhost:8080)
-# ---------------------
+# ----------------------------------------------------------------------------
 
-  config.vm.define 'salt', primary: true do |vmconfig|
-    vmconfig.vm.network :private_network, ip: SERVER_IP
-    vmconfig.vm.hostname = "salt.#{DOMAIN}"
+  config.vm.define 'ubuntu-master', primary: true do |vmconfig|
+    vmconfig.vm.network :private_network, ip: UMASTER_IP
+    vmconfig.vm.hostname = "ubuntu-master.#{DOMAIN}"
 
-#    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
-      vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
+      vb.customize ["modifyvm", :id, "--memory", UMASTER_MEMORY]
     end
     
     vmconfig.vm.provision :salt do |salt|
@@ -58,90 +71,101 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     end
   end
 
-# ---------------------
+# ----------------------------------------------------------------------------
 # Ubuntu minion configuration
-# ---------------------
+# ----------------------------------------------------------------------------
   config.vm.define 'ubuntu-minion' do |vmconfig|
     vmconfig.vm.network :private_network, ip: UMINION_IP
     vmconfig.vm.hostname = "ubuntu-minion.#{DOMAIN}"
+    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
       vb.customize ["modifyvm", :id, "--memory", UMINION_MEMORY]
     end
 
     vmconfig.vm.provision :salt do |salt|
-      salt.verbose = true
       salt.minion_config = 'salt/minion'
+      salt.minion_key = 'salt/keys/ubuntu-minion.bhazard.com.pem'
+      salt.minion_pub = 'salt/keys/ubuntu-minion.bhazard.com.pub'
+      salt.colorize = true
+      salt.verbose = DEBUG
+      salt.log_level =  'debug' if DEBUG
+      salt.bootstrap_options = '-D' if DEBUG
       salt.run_highstate = true
     end
 
   end
 
-# ---------------------
+# ----------------------------------------------------------------------------
 # Masterless Minion configuration
 # Configures apache with a simple web page
-# ---------------------
-  config.vm.define 'masterless', primary: true do |vmconfig|
-    vmconfig.vm.network :private_network, ip: MASTERLESS_IP
-    vmconfig.vm.hostname = "masterless.#{DOMAIN}"
-    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
-    vmconfig.vm.provider :virtualbox do |vb|
-      vb.name = vmconfig.vm.hostname
-      vb.customize ["modifyvm", :id, "--memory", MASTERLESS_MEMORY]
-    end
+# ----------------------------------------------------------------------------
+  if INCLUDE_MASTERLESS
+    config.vm.define 'masterless', primary: true do |vmconfig|
+      vmconfig.vm.network :private_network, ip: MASTERLESS_IP
+      vmconfig.vm.hostname = "masterless.#{DOMAIN}"
+      vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+      vmconfig.vm.provider :virtualbox do |vb|
+        vb.name = vmconfig.vm.hostname
+        vb.customize ["modifyvm", :id, "--memory", MASTERLESS_MEMORY]
+      end
     
-    vmconfig.vm.provision :salt do |salt|
-      salt.verbose = true
-      salt.minion_config = 'salt/masterless'
-      salt.run_highstate = true
-    #  log_level =  'debug'
-    #  colorize = false
+      vmconfig.vm.provision :salt do |salt|
+        salt.verbose = DEBUG
+        salt.minion_config = 'salt/masterless'
+        salt.run_highstate = true
+        salt.log_level =  'debug' if DEBUG
+        salt.bootstrap_options = '-D' if DEBUG
+        salt.colorize = false
+      end
     end
-  end
+  end 
 
-# ---------------------
+# ----------------------------------------------------------------------------
 # Windows minion configuration
-# ---------------------
-  config.vm.define 'windows-minion', primary: true do |vmconfig|
+# This example assumes that a vagrant-compatible virtualbox image has been
+# set up per the instructions in github.com/bhazard/vagrant-examples.
+# ----------------------------------------------------------------------------
+  if INCLUDE_WINDOWS_MINION
+    config.vm.define 'windows-minion', primary: true do |vmconfig|
 
-# the virtualbox box with windows installed
-    vmconfig.vm.box = "win2012serv"
-  #config.vm.box_url = "file://win2012serv"
+    # the virtualbox box with windows installed
+      vmconfig.vm.box = "win2012serv"
+    #config.vm.box_url = "file://win2012serv"
 
-# communicate via winRDP instead of ssh:
-    vmconfig.vm.communicator = 'winrm'
+    # communicate via winRDP instead of ssh:
+      vmconfig.vm.communicator = 'winrm'
 
-# Ensure that all networks are set to private
-    vmconfig.windows.set_work_network = true
+    # Ensure that all networks are set to private
+      vmconfig.windows.set_work_network = true
 
-    vmconfig.vm.guest = :windows
+      vmconfig.vm.guest = :windows
     # setting of hostname does not work in the vagrant 1.6.3 windows guest
 #    vmconfig.vm.hostname = 'winrenamed'
-    vmconfig.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
-    vmconfig.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
+      vmconfig.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
+      vmconfig.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
 
-    vmconfig.vm.network :private_network, ip: WMINION_IP
-    vmconfig.vm.hostname = "windows-minion.#{DOMAIN}"
+      vmconfig.vm.network :private_network, ip: WMINION_IP
+      vmconfig.vm.hostname = "windows-minion.#{DOMAIN}"
    # vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
 
-    vmconfig.vm.provider :virtualbox do |vb|
-      vb.name = vmconfig.vm.hostname
-      vb.gui = true
-      vb.customize ["modifyvm", :id, "--memory", WMINION_MEMORY]
-    end
+      vmconfig.vm.provider :virtualbox do |vb|
+        vb.name = vmconfig.vm.hostname
+        vb.gui = true
+        vb.customize ["modifyvm", :id, "--memory", WMINION_MEMORY]
+      end
     
-    # Simple script provisioner demo -- runs a PowerShell command or script
-    vmconfig.vm.provision 'shell', 
-      inline: 'Write-Host Hello from ($env:computername)!'
+      vmconfig.vm.provision :salt do |salt|
+        salt.verbose = DEBUG
+        salt.minion_config = 'salt/roots/windows-minion'
+        salt.run_highstate = true
+        salt.log_level =  'debug' if DEBUG
+      #  colorize = false
+      end
 
-    vmconfig.vm.provision :salt do |salt|
-      salt.verbose = true
-      salt.minion_config = 'salt/roots/windows-minion'
-      salt.run_highstate = true
-      salt.log_level =  'debug'
-    #  colorize = false
-    end
-  end
+    end 
+  
+  end #if INCLUDE_WINDOWS_MINION
 
 
 end
