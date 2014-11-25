@@ -10,7 +10,7 @@ are on the github [wiki](https://github.com/bhazard/vagrant-examples/wiki/Creati
 
 - vagrant 1.6.4 or later
 - virtualbox
-- a Windows base box, per the [wiki](https://github.com/bhazard/vagrant-examples/wiki/Creating-a-Windows-Server-2012-Virtualbox-Image-for-Use-with-Vagrant)
+- a Windows base box, per the [wiki](https://github.com/bhazard/vagrant-examples/wiki/Creating-a-Windows-Server-2012-Virtualbox-Image-for-Vagrant)
 
 ### References
 
