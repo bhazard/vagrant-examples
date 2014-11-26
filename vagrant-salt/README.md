@@ -14,7 +14,7 @@ vim installed and that
 #### windows-minion
 
 The windows-minion requires an available vagrant-compatible virtualbox image.  See
-instructions in [github.com/bhazard/vagrant-examples/wiki](https://github.com/bhazard/vagrant-examples/wiki/Creating-a-Windows-Server-2012-Virtualbox-Image-for-Use-with-Vagrant)
+instructions in [github.com/bhazard/vagrant-examples/wiki](https://github.com/bhazard/vagrant-examples/wiki/Creating-a-Windows-Server-2012-Virtualbox-Image-for-Vagrant)
 
 Once the windows virtualbox image is loaded and launched, vagrant will bootstrap
 salt by downloading and installing the salt bootstrapper.  Salt minion will be
