@@ -44,6 +44,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = 'ubuntu-trusty-server-64'
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
+# Should only be needed on the master?
   config.vm.synced_folder 'salt/roots/', '/srv/'
 
 # ----------------------------------------------------------------------------
@@ -66,9 +67,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       salt.install_master = true
       salt.master_config = 'salt/master'
       salt.install_master = true
-#      salt.master_key = 'salt/keys/master.pem'
-#      salt.master_pub = 'salt/keys/master.pub'
-#      salt.seed_master = { master: 'salt/keys/master.pub', uminion: 'salt/keys/ubuntu-minion.pub' }
+      salt.master_key = 'salt/keys/master.pem'
+      salt.master_pub = 'salt/keys/master.pub'
+      salt.minion_key = 'salt/keys/master-minion.pem'
+      salt.minion_pub = 'salt/keys/master-minion.pub'
+      salt.seed_master = { 
+        master: 'salt/keys/master-minion.pub', 
+        uminion: 'salt/keys/ubuntu-minion.pub',
+        wminion: 'salt/keys/windows-minion.pub' }
       # TO-DO: accept_keys is deprecated and should be replaced by seed_master
       #salt.accept_keys = true
       salt.minion_config = 'salt/minion'
@@ -166,7 +172,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     # Vagrant salt provisioner has a bug as of 1.6.5 that causes it to fail if 
     # the bootstrap file is not present.  So we need to "touch" it before salt.
-      vmconfig.vm.provision :shell, inline: "echo 'foo' > c:/tmp/bootstrap_salt.ps1"   
+    #  vmconfig.vm.provision :shell, inline: "echo 'foo' > c:/tmp/bootstrap_salt.ps1"   
 
     # Windows Issues:
     # - Vagrant bug above
