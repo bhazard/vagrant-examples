@@ -1,4 +1,5 @@
 
+{% if grains['os'] == 'Ubuntu' %}
 apache2:
   pkg:
     - installed
@@ -13,3 +14,4 @@ apache2:
     - source: salt://webserver/index.html
     - require:
       - pkg: apache2
+{% endif %}

@@ -11,9 +11,10 @@
 # ----------------------------------------------------------------------------
 DOMAIN = 'bhazard.com'
 SUBNET = '192.168.2'
-DEBUG = false   # Set to true for verbose output
+DEBUG = true   # Set to true for verbose output
+BOOTSTRAP_DEBUG = true
 INCLUDE_MASTERLESS = false
-INCLUDE_WINDOWS_MINION = false
+INCLUDE_WINDOWS_MINION = true
 
 # The SERVER_IP here should match the IP specified in salt/minion for the
 # master variable around line 12.
@@ -51,9 +52,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 # host's NAT'ed network (Port 80 on guest forwarded to localhost:8080)
 # ----------------------------------------------------------------------------
 
-  config.vm.define 'ubuntu-master', primary: true do |vmconfig|
+  config.vm.define 'master', primary: true do |vmconfig|
     vmconfig.vm.network :private_network, ip: UMASTER_IP
-    vmconfig.vm.hostname = "ubuntu-master.#{DOMAIN}"
+    vmconfig.vm.hostname = "master"
 
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
@@ -64,6 +65,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       salt.verbose = true
       salt.install_master = true
       salt.master_config = 'salt/master'
+      salt.install_master = true
+#      salt.master_key = 'salt/keys/master.pem'
+#      salt.master_pub = 'salt/keys/master.pub'
+#      salt.seed_master = { master: 'salt/keys/master.pub', uminion: 'salt/keys/ubuntu-minion.pub' }
       # TO-DO: accept_keys is deprecated and should be replaced by seed_master
       #salt.accept_keys = true
       salt.minion_config = 'salt/minion'
@@ -74,9 +79,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 # ----------------------------------------------------------------------------
 # Ubuntu minion configuration
 # ----------------------------------------------------------------------------
-  config.vm.define 'ubuntu-minion' do |vmconfig|
+  config.vm.define 'uminion' do |vmconfig|
     vmconfig.vm.network :private_network, ip: UMINION_IP
-    vmconfig.vm.hostname = "ubuntu-minion.#{DOMAIN}"
+    vmconfig.vm.hostname = "uminion"
     vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
@@ -85,8 +90,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     vmconfig.vm.provision :salt do |salt|
       salt.minion_config = 'salt/minion'
-      salt.minion_key = 'salt/keys/ubuntu-minion.bhazard.com.pem'
-      salt.minion_pub = 'salt/keys/ubuntu-minion.bhazard.com.pub'
+      salt.minion_key = 'salt/keys/ubuntu-minion.pem'
+      salt.minion_pub = 'salt/keys/ubuntu-minion.pub'
       salt.colorize = true
       salt.verbose = DEBUG
       salt.log_level =  'debug' if DEBUG
@@ -115,7 +120,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         salt.minion_config = 'salt/masterless'
         salt.run_highstate = true
         salt.log_level =  'debug' if DEBUG
-        salt.bootstrap_options = '-D' if DEBUG
+        salt.bootstrap_options = '-D' if BOOTSTRAP_DEBUG
         salt.colorize = false
       end
     end
@@ -127,7 +132,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 # set up per the instructions in github.com/bhazard/vagrant-examples.
 # ----------------------------------------------------------------------------
   if INCLUDE_WINDOWS_MINION
-    config.vm.define 'windows-minion', primary: true do |vmconfig|
+    config.vm.define 'wminion', primary: true do |vmconfig|
 
     # the virtualbox box with windows installed
       vmconfig.vm.box = "win2012serv"
@@ -140,13 +145,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vmconfig.windows.set_work_network = true
 
       vmconfig.vm.guest = :windows
-    # setting of hostname does not work in the vagrant 1.6.3 windows guest
-#    vmconfig.vm.hostname = 'winrenamed'
+    # setting of hostname triggers a reboot of the OS
+      vmconfig.vm.hostname = 'wminion'
       vmconfig.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
       vmconfig.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true
 
       vmconfig.vm.network :private_network, ip: WMINION_IP
-      vmconfig.vm.hostname = "windows-minion.#{DOMAIN}"
    # vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
 
       vmconfig.vm.provider :virtualbox do |vb|
@@ -154,14 +158,36 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.gui = true
         vb.customize ["modifyvm", :id, "--memory", WMINION_MEMORY]
       end
-    
-      vmconfig.vm.provision :salt do |salt|
-        salt.verbose = DEBUG
-        salt.minion_config = 'salt/roots/windows-minion'
-        salt.run_highstate = true
-        salt.log_level =  'debug' if DEBUG
+
+    # bootstrap salt via a modified bootstrap script
+      vmconfig.vm.provision :shell, inline: "cp /vagrant/salt/keys/windows-minion.pem c:/tmp/minion.pem"
+      vmconfig.vm.provision :shell, inline: "cp /vagrant/salt/keys/windows-minion.pub c:/tmp/minion.pub"
+      vmconfig.vm.provision :shell, path: "bootstrap-salt.ps1"   
+
+    # Vagrant salt provisioner has a bug as of 1.6.5 that causes it to fail if 
+    # the bootstrap file is not present.  So we need to "touch" it before salt.
+      vmconfig.vm.provision :shell, inline: "echo 'foo' > c:/tmp/bootstrap_salt.ps1"   
+
+    # Windows Issues:
+    # - Vagrant bug above
+    # - doesn't use the supplied minion_config when it runs state.highstate
+    #   so the minion only talks to salt (or tries to)
+
+ #     vmconfig.vm.provision :salt do |salt|
+ #       salt.verbose = DEBUG
+ #       salt.minion_config = 'salt/windows-minion'
+ #       salt.minion_key = 'salt/keys/windows-minion.pem'
+ #       salt.minion_pub = 'salt/keys/windows-minion.pub'
+ #       salt.run_highstate = false
+#        salt.no_minion = true
+  #      salt.log_level =  'debug' if DEBUG
+      #  salt.bootstrap_options = '-D' if BOOTSTRAP_DEBUG
       #  colorize = false
-      end
+   #   end
+
+    #  vmconfig.vm.provision :shell, inline: "cp c:/tmp/minion c:/salt/conf"
+     # vmconfig.vm.provision :shell, inline: "restart-service salt-minion"
+#      vmconfig.vm.provision :shell, inline: "c:/salt/salt-call state.highstate"
 
     end 
   
