@@ -40,15 +40,12 @@ VAGRANTFILE_API_VERSION = '2'
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
-# This is the default base image ... for windows vm's, we over-ride this below
+# This is the default base image (an ubuntu image) ... for windows vm's, we over-ride this below
   config.vm.box = 'ubuntu-trusty-server-64'
   config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
-# Should only be needed on the master?
-  config.vm.synced_folder 'salt/roots/', '/srv/'
-
 # ----------------------------------------------------------------------------
-# ubuntu-master configuration
+# salt master configuration
 # The server sits both on the private network and presents a website on
 # host's NAT'ed network (Port 80 on guest forwarded to localhost:8080)
 # ----------------------------------------------------------------------------
@@ -57,11 +54,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vmconfig.vm.network :private_network, ip: UMASTER_IP
     vmconfig.vm.hostname = "master"
 
+    vmconfig.vm.synced_folder 'salt/roots/', '/srv/'
+
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
       vb.customize ["modifyvm", :id, "--memory", UMASTER_MEMORY]
     end
-    
+
     vmconfig.vm.provision :salt do |salt|
       salt.verbose = true
       salt.install_master = true
@@ -74,9 +73,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       salt.seed_master = { 
         master: 'salt/keys/master-minion.pub', 
         uminion: 'salt/keys/ubuntu-minion.pub',
-        wminion: 'salt/keys/windows-minion.pub' }
-      # TO-DO: accept_keys is deprecated and should be replaced by seed_master
-      #salt.accept_keys = true
+        wminion: 'salt/keys/windows-minion.pub'
+      }
       salt.minion_config = 'salt/minion'
       #salt.run_highstate = true
     end
