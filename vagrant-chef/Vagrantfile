@@ -1,10 +1,10 @@
 # Vagrantfile for creating a set of VM's to show various chef configurations
 # ----------------------------------------------------------------------------
 
-# server -- an ubuntu chef master
-# ubuntu-minion -- an ubuntu chef minion that takes configuration from ubuntu-master
+# chefserver -- an ubuntu chef server
+# chefclient -- an ubuntu chef minion that takes configuration from chefserver
 # windows-minion -- a windows minion that is configured from ubuntu-master
-# solo -- a stand-alone ubuntu vm that configures chef from the file system
+# chefsolo -- a stand-alone ubuntu vm that configures chef from the file system
 
 # ----------------------------------------------------------------------------
 # Things that might need tweaking for your network
@@ -22,25 +22,38 @@ WCLIENT_IP = "#{SUBNET}.12"
 SOLO_IP = "#{SUBNET}.13"
 
 SERVER_MEMORY = 1024
-SOLO_MEMORY = 1024
 UCLIENT_MEMORY = 1024
 WCLIENT_MEMORY = 2048
+SOLO_MEMORY = 1024
 
 # ----------------------------------------------------------------------------
 
-# For RDP to work correctly for windows, you'll need 1.6.5 or greater.  If you
+# For RDP to work correctly for windows, we need 1.6.5 or greater.  If you
 # don't care about windows (or don't need RDP), older versions should be fine
 # and you can comment out the following line. 
 Vagrant.require_version ">= 1.6.5"
+Vagrant.require_plugin('vagrant-vbguest')
 
 VAGRANTFILE_API_VERSION = '2'
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.cache.auto_detect = true if Vagrant.has_plugin?('vagrant-cachier')
 
+# Is this required for chef-server?
+  if Vagrant.has_plugin?('vagrant-hostmanager')
+    config.hostmanager.enabled = true
+    config.hostmanager.manage_host = true
+    config.hostmanager.include_offline = true
+  end
+
 # This is the default base image (an ubuntu image) ... for windows vm's, we over-ride this below
-  config.vm.box = 'ubuntu-trusty-server-64'
-  config.vm.box_url = "http://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
+  config.vm.box = 'ubuntu-xenial-server-64'
+  config.vm.box_url = "http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-vagrant.box"
+
+# This box does not include the virtualbox shared folders ability, so we must
+# be sure it is installed.
+# Do not update the Virtualbox guest -- we don't need it for servers
+  config.vbguest.auto_update = true if Vagrant.has_plugin?('vagrant-vbguest')
 
 # ----------------------------------------------------------------------------
 # chef server configuration
@@ -48,13 +61,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 # host's NAT'ed network (Port 80 on guest forwarded to localhost:8080)
 # ----------------------------------------------------------------------------
 
-  config.vm.define 'server' do |vmconfig|
+  config.vm.define 'chefserver' do |vmconfig|
     vmconfig.vm.network :private_network, ip: SERVER_IP
-    vmconfig.vm.hostname = "chefserver"
+    vmconfig.vm.hostname = "chefserver.#{DOMAIN}"
+    vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
 
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
-      vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
+      vb.memory = SERVER_MEMORY
+      # vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
     end
 
     vmconfig.vm.provision :chef_solo do |chef|
@@ -67,13 +82,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 # ----------------------------------------------------------------------------
 # Ubuntu Chef Client configuration
 # ----------------------------------------------------------------------------
-  config.vm.define 'uclient' do |vmconfig|
+  config.vm.define 'chefclient' do |vmconfig|
     vmconfig.vm.network :private_network, ip: UCLIENT_IP
-    vmconfig.vm.hostname = "UCLIENT"
+    vmconfig.vm.hostname = "chefclient.#{DOMAIN}"
     vmconfig.vm.network :forwarded_port, guest: 80, host: 8080, auto_correct: true
+
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
-      vb.customize ["modifyvm", :id, "--memory", UCLIENT_MEMORY]
+      vb.memory = UCLIENT_MEMORY
+      # vb.customize ["modifyvm", :id, "--memory", UCLIENT_MEMORY]
     end
 
     vmconfig.vm.provision :chef_solo do |chef|
@@ -96,7 +113,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
       vmconfig.vm.provider :virtualbox do |vb|
         vb.name = vmconfig.vm.hostname
-        vb.customize ["modifyvm", :id, "--memory", SOLO_MEMORY]
+        vb.memory = SOLO_MEMORY
+        # vb.customize ["modifyvm", :id, "--memory", SOLO_MEMORY]
       end
     
       vmconfig.vm.provision :chef_solo do |chef|
