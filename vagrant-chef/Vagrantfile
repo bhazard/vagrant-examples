@@ -9,10 +9,10 @@
 # ----------------------------------------------------------------------------
 # Things that might need tweaking for your network
 # ----------------------------------------------------------------------------
-DOMAIN = 'bhazard.com'
+
+DOMAIN = 'virtualbox.local'
 SUBNET = '192.168.7'
-DEBUG = true   # Set to true for verbose output
-BOOTSTRAP_DEBUG = true
+DEBUG = false   # Set to true for verbose output
 INCLUDE_SOLO = false
 INCLUDE_WINDOWS_CLIENT = false
 
@@ -31,8 +31,17 @@ SOLO_MEMORY = 1024
 # For RDP to work correctly for windows, we need 1.6.5 or greater.  If you
 # don't care about windows (or don't need RDP), older versions should be fine
 # and you can comment out the following line. 
-Vagrant.require_version ">= 1.6.5"
-Vagrant.require_plugin('vagrant-vbguest')
+Vagrant.require_version ">= 1.6.5" if INCLUDE_WINDOWS_CLIENT
+
+# Check required plugins
+REQUIRED_PLUGINS = %w(vagrant-vbguest)
+exit unless REQUIRED_PLUGINS.all? do |plugin|
+  Vagrant.has_plugin?(plugin) || (
+    puts "The #{plugin} plugin is required. Please install it with:"
+    puts "$ vagrant plugin install #{plugin}"
+    false
+  )
+end
 
 VAGRANTFILE_API_VERSION = '2'
 
@@ -50,9 +59,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = 'ubuntu-xenial-server-64'
   config.vm.box_url = "http://cloud-images.ubuntu.com/xenial/current/xenial-server-cloudimg-amd64-vagrant.box"
 
-# This box does not include the virtualbox shared folders ability, so we must
-# be sure it is installed.
-# Do not update the Virtualbox guest -- we don't need it for servers
+# This ubuntu box does not include the virtualbox shared folders ability, so 
+# we must be sure it is installed.
   config.vbguest.auto_update = true if Vagrant.has_plugin?('vagrant-vbguest')
 
 # ----------------------------------------------------------------------------
@@ -157,11 +165,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         vb.gui = true
         vb.customize ["modifyvm", :id, "--memory", WCLIENT_MEMORY]
       end
-
-    # bootstrap salt via a modified bootstrap script
-      vmconfig.vm.provision :shell, inline: "cp /vagrant/salt/keys/windows-minion.pem c:/tmp/minion.pem"
-      vmconfig.vm.provision :shell, inline: "cp /vagrant/salt/keys/windows-minion.pub c:/tmp/minion.pub"
-      vmconfig.vm.provision :shell, path: "bootstrap-salt.ps1"   
 
     # Vagrant salt provisioner has a bug as of 1.6.5 that causes it to fail if 
     # the bootstrap file is not present.  So we need to "touch" it before salt.
