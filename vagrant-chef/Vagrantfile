@@ -77,7 +77,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
       vb.memory = SERVER_MEMORY
-      # vb.customize ["modifyvm", :id, "--memory", SERVER_MEMORY]
     end
 
     vmconfig.vm.provision :chef_solo do |chef|
@@ -98,7 +97,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vmconfig.vm.provider :virtualbox do |vb|
       vb.name = vmconfig.vm.hostname
       vb.memory = UCLIENT_MEMORY
-      # vb.customize ["modifyvm", :id, "--memory", UCLIENT_MEMORY]
     end
 
     vmconfig.vm.provision :chef_solo do |chef|
@@ -122,7 +120,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       vmconfig.vm.provider :virtualbox do |vb|
         vb.name = vmconfig.vm.hostname
         vb.memory = SOLO_MEMORY
-        # vb.customize ["modifyvm", :id, "--memory", SOLO_MEMORY]
       end
     
       vmconfig.vm.provision :chef_solo do |chef|
