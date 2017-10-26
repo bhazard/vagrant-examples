@@ -15,7 +15,7 @@ use Vagrant. The various sub-projects are a work in progress.
 
 - vagrant 1.6.4 or later
 - virtualbox
-- the windows examples require a base box -- instructions for creating one are [here](https://github.com/bhazard/vagrant-examples/wiki/Creating-a-Windows-Server-2012-Virtualbox-Image-for-Use-with-Vagrant)
+- the windows examples require a base box -- instructions for creating one are [here](https://github.com/bhazard/vagrant-examples/wiki/Creating-a-Windows-Server-2012-Virtualbox-Image-for-Vagrant)
 
 
 ### References
